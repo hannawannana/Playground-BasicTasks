@@ -10,18 +10,36 @@ public class SampleClient {
 
         // Create a FHIR client
         FhirContext fhirContext = FhirContext.forR4();
-        IGenericClient client = fhirContext.newRestfulGenericClient("http://hapi.fhir.org/baseR4");
+        IGenericClient client = fhirContext.newRestfulGenericClient("https://hapi.fhir.org/baseR4");
         client.registerInterceptor(new LoggingInterceptor(false));
 
         // Search for Patient resources
         Bundle response = client
                 .search()
                 .forResource("Patient")
-                .where(Patient.FAMILY.matches().value("SMITH"))
+                .sort().ascending(Patient.GIVEN)
                 .returnBundle(Bundle.class)
                 .execute();
 
 
+        for (Bundle.BundleEntryComponent e : response.getEntry()) {
+            String id = e.getResource().getId();
+            Patient p = (Patient) client
+                    .read()
+                    .resource("Patient")
+                    .withId(id)
+                    .execute();
+
+            System.out.println(" First Name: " + p.getName().get(0).getGiven()
+                    + "\n Last Name: " +p.getName().get(0).getFamily()
+                    + "\n Date of Birth: " + p.getBirthDate());
+
+        }
+
     }
 
 }
+
+
+
+
